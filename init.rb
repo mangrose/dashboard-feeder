@@ -1,0 +1,1 @@
+Mongoid.load!('mongoid.yml')

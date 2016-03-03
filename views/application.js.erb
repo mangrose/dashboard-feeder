@@ -1,0 +1,19 @@
+var scheme   = "<%= @scheme %>";
+var uri      = scheme + window.document.location.host + "/";
+var ws       = new WebSocket(uri);
+
+ws.onmessage = function(message) {
+  var data = JSON.parse(message.data);
+  var payload = JSON.stringify(data.data);
+
+  console.log(data);
+  if (data.hasOwnProperty('aggregate')) {
+    $('#total').html('<b>'+data.aggregate.total+'</b>').fadeIn(500).fadeOut(500).fadeIn(300);
+  }
+  else {
+    $("#messages").prepend("<div class='message'><div class='header'><b>"+data.handle+ "</b> for "+data.oid+" says:</div><div class='body'>" + data.text+"</div></div>");
+    $("#messages").stop().animate({
+      scrollTop: $('#messages')[0].scrollHeight
+    }, 800);
+  }
+};
