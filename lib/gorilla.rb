@@ -3,6 +3,8 @@ module Gorilla
   class App < Sinatra::Base
     helpers ResponseHelper
 
+    CHANNEL        = ENV['GORILLA_MESSAGE_PIPELINE']
+
     def protected!
       unless authorized?
         response['WWW-Authenticate'] = %(Basic realm="Restricted Area")
@@ -12,11 +14,8 @@ module Gorilla
 
     def authorized?
       @auth ||=  Rack::Auth::Basic::Request.new(request.env)
-      @auth.provided? && @auth.basic? && @auth.credentials && @auth.credentials == ['admin', 'app161770']
+      @auth.provided? && @auth.basic? && @auth.credentials && @auth.credentials == [ENV['API_USER'], ENV['API_PASSWORD']]
     end
-
-
-    CHANNEL        = ENV['GORILLA_MESSAGE_PIPELINE']
 
     configure do
       redis_url = ENV['REDISCLOUD_URL']
