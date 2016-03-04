@@ -3,6 +3,19 @@ module Gorilla
   class App < Sinatra::Base
     helpers ResponseHelper
 
+    def protected!
+      unless authorized?
+        response['WWW-Authenticate'] = %(Basic realm="Restricted Area")
+        throw(:halt, [401, "Not authorized\n"])
+      end
+    end
+
+    def authorized?
+      @auth ||=  Rack::Auth::Basic::Request.new(request.env)
+      @auth.provided? && @auth.basic? && @auth.credentials && @auth.credentials == ['admin', 'app161770']
+    end
+
+
     CHANNEL        = ENV['GORILLA_MESSAGE_PIPELINE']
 
     configure do
@@ -22,6 +35,7 @@ module Gorilla
     end
 
     get '/payments' do
+      protected!
       aggregate = Gorilla::PaymentAggregate.first
       aggregate = Gorilla::PaymentAggregate.make unless aggregate
       json_response(:raw => false) do
@@ -30,6 +44,7 @@ module Gorilla
     end
 
     get '/accounts' do
+      protected!
       aggregate = Gorilla::AccountAggregate.first
       aggregate = Gorilla::AccountAggregate.make unless aggregate
       json_response(:raw => false) do
@@ -38,6 +53,7 @@ module Gorilla
     end
 
     get '/orders' do
+      protected!
       aggregate = Gorilla::OrderAggregate.first
       aggregate = Gorilla::OrderAggregate.make unless aggregate
       json_response(:raw => false) do
@@ -46,6 +62,7 @@ module Gorilla
     end
 
     post '/event/receive' do
+      protected!
       json = request.body.read
       data = JSON.parse(json, :symbolize_names => true)
       events = %w(payment_success new_account_registered order_closed account_activated_for_existing_customer)
