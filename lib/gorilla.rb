@@ -72,6 +72,59 @@ module Gorilla
 
       200
     end
+
+    post '/data/reset' do
+      protected!
+      json = request.body.read
+
+      begin
+        data = JSON.parse(json, :symbolize_names => true)
+        seed = data[:seed]
+        return 400 unless seed
+
+        if seed.has_key?(:accounts)
+          created = seed[:accounts].fetch(:total_created, 0)
+          created_today = seed[:accounts].fetch(:total_created_today, 0)
+          activated = seed[:accounts].fetch(:total_activated, 0)
+          activated_today = seed[:accounts].fetch(:total_activated_today, 0)
+          puts "Resetting account data. total created => #{created} activated => #{activated}"
+          aggregate = Gorilla::AccountAggregate.first
+          aggregate = Gorilla::AccountAggregate.make unless aggregate
+          aggregate.total_created = created
+          aggregate.total_activated = activated
+          aggregate.total_created_day = created_today
+          aggregate.total_activated_day = activated_today
+          aggregate.save
+        end
+        if seed.has_key?(:orders)
+          total_orders = seed[:orders].fetch(:total, 0)
+          total_orders_today = seed[:orders].fetch(:total_today, 0)
+          puts "Resetting order data. total closed => #{total_orders} today => #{total_orders_today}"
+          aggregate = Gorilla::OrderAggregate.first
+          aggregate = Gorilla::OrderAggregate.make unless aggregate
+          aggregate.total = total_orders
+          aggregate.total_day = total_orders_today
+          aggregate.save
+        end
+        if seed.has_key?(:payments)
+          total_amount = seed[:payments].fetch(:total_amount, '0')
+          total_amount_today = seed[:payments].fetch(:total_amount_today, '0')
+          total_transactions = seed[:payments].fetch(:total_transactions, 0)
+          puts "Resetting payment data. total amount => #{total_amount} today => #{total_amount_today}"
+          aggregate = Gorilla::PaymentAggregate.first
+          aggregate = Gorilla::PaymentAggregate.make unless aggregate
+          aggregate.total = total_amount
+          aggregate.total_day = total_amount_today
+          aggregate.total_transactions = total_transactions
+          aggregate.save
+        end
+
+        200
+      rescue => e
+        puts e.message
+        400
+      end
+    end
     
     get '/dynamic/assets/js/application.js' do
       content_type :js
