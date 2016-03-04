@@ -6,8 +6,6 @@ use Rack::Static,
     :urls => ["/assets"],
     :root => "public"
 
-use Gorilla::SocketBackend
-
 map '/' do
   run Gorilla::App
 end

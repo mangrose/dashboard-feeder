@@ -17,20 +17,39 @@ module Gorilla
     end
     
     get '/' do
-      @aggregate = Gorilla::Aggregate.first
+      @aggregate = Gorilla::PaymentAggregate.first
       erb :'index.html'
     end
 
-    get '/aggregate' do
-      json_response(:raw => true, :logging => false) do
-        Gorilla::Aggregate.first.to_hash
+    get '/payments' do
+      aggregate = Gorilla::PaymentAggregate.first
+      aggregate = Gorilla::PaymentAggregate.make unless aggregate
+      json_response(:raw => false) do
+        aggregate.to_hash
+      end
+    end
+
+    get '/accounts' do
+      aggregate = Gorilla::AccountAggregate.first
+      aggregate = Gorilla::AccountAggregate.make unless aggregate
+      json_response(:raw => false) do
+        aggregate.to_hash
+      end
+    end
+
+    get '/orders' do
+      aggregate = Gorilla::OrderAggregate.first
+      aggregate = Gorilla::OrderAggregate.make unless aggregate
+      json_response(:raw => false) do
+        aggregate.to_hash
       end
     end
 
     post '/event/receive' do
       json = request.body.read
       data = JSON.parse(json, :symbolize_names => true)
-      if data[:event] == 'payment_success'
+      events = %w(payment_success new_account_registered order_closed account_activated_for_existing_customer)
+      if events.include?(data[:event])
         Resque.enqueue(Gorilla::Daemon, json)
       end
       process_event(data)

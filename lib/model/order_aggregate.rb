@@ -1,9 +1,8 @@
 module Gorilla
 
-  class Aggregate
+  class OrderAggregate
     include Mongoid::Document
     
-    field :organisation_id, type: Symbol
     field :total, type: BigDecimal, default: ->{ 0 }
     field :total_year, type: BigDecimal, default: ->{ 0 }
     field :total_month, type: BigDecimal, default: ->{ 0 }
@@ -15,9 +14,8 @@ module Gorilla
     field :current_month, type: Integer
     field :current_year, type: Integer
     
-    def self.make(organisation_id)
+    def self.make
       entity = self.new
-      entity.organisation_id = organisation_id
       entity.current_day = Time.now.strftime('%u').to_i
       entity.current_week = Time.now.strftime('%W').to_i
       entity.current_month = Time.now.strftime('%-m').to_i
@@ -35,39 +33,38 @@ module Gorilla
       }
     end
     
-    def add_amount(amount_string)
-      amount = BigDecimal.new(amount_string)
+    def increment_order_closed
       current_day = Time.now.strftime('%u').to_i
       current_week = Time.now.strftime('%W').to_i
       current_month = Time.now.strftime('%-m').to_i
       current_year = Time.now.strftime('%Y').to_i
       
       if (current_day > self.current_day or current_day < self.current_day) and self.total_day != 0
-        self.total_day = amount
+        self.total_day = 1
         self.current_day = current_day
       else
-        self.total_day += amount
+        self.total_day += 1
       end
       if (current_week > self.current_week or current_week < self.current_week) and self.total_week != 0
-        self.total_week = amount
+        self.total_week = 1
         self.current_week = current_week
       else
-        self.total_week += amount
+        self.total_week += 1
       end
       if (current_month > self.current_month or current_month < self.current_month) and self.total_month != 0
-        self.total_month = amount
+        self.total_month = 1
         self.current_month = current_month
       else
-        self.total_month += amount
+        self.total_month += 1
       end      
       if current_year > self.current_year and self.total_year != 0
-        self.total_year = amount
+        self.total_year = 1
         self.current_year = current_year
       else
-        self.total_year += amount
+        self.total_year += 1
       end
       
-      self.total += amount
+      self.total += 1
       
       self
     end
