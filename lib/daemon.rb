@@ -1,6 +1,8 @@
+require 'rest-client'
+
 module Gorilla
 
-  class Daemon 
+  class Daemon
     @queue = :aggregate
 
     def initialize
@@ -10,11 +12,11 @@ module Gorilla
       uri = URI.parse(redis_url)
       @redis = Redis.new(:host => uri.host, :port => uri.port, :password => uri.password)
     end
-    
+
     def self.perform(json)
       (new).perform_aggregation(json)
-    end    
-  
+    end
+
     def perform_aggregation(json)
       data = JSON.parse(json, :symbolize_names => true)
       event_name = data[:event]
@@ -30,7 +32,7 @@ module Gorilla
       end
       flush 'Aggregation completed'
     end
-    
+
     private
 
     def process_payment(data)
@@ -42,6 +44,8 @@ module Gorilla
       amount = payment[:amount]
       aggregate.add_amount(amount)
       aggregate.save
+      update_widget('money-today', aggregate)
+
       aggregate
     end
 
@@ -52,6 +56,8 @@ module Gorilla
 
       aggregate.increment_account_created
       aggregate.save
+
+      update_widget('accounts-today', aggregate)
       aggregate
     rescue => e
       flush e.message
@@ -65,7 +71,8 @@ module Gorilla
 
       aggregate.increment_account_activated
       aggregate.save
-      p aggregate
+
+      update_widget('activations-today', aggregate)
       aggregate
     end
 
@@ -76,7 +83,28 @@ module Gorilla
 
       aggregate.increment_order_closed
       aggregate.save
+      update_widget('orders-today', aggregate)
       aggregate
+    end
+
+    def update_widget(widget, aggregate)
+      dashing_app_url = ENV['DASHING_APP_URL']
+      dashing_app_token = ENV['DASHING_APP_TOKEN']
+      data = {:auth_token => dashing_app_token}
+
+      #curl -d '{"auth_token":"my-secret-token-1234","current":4}' http://payway-dash.herokuapp.com/widgets/accounts-today
+      if widget == 'accounts-today'
+        data = data.merge({:current => aggregate.total_created_day})
+      elsif widget == 'activations-today'
+        data = data.merge({:current => aggregate.total_activated_day})
+      elsif widget == 'orders-today'
+        data = data.merge({:current => aggregate.total_day})
+      elsif widget == 'money-today'
+        data = data.merge({:current => aggregate.total_day})
+      end
+      url = "#{dashing_app_url}/widgets/#{widget}"
+      puts "Updating widget: #{widget}"
+      RestClient.post(url, data.to_json)
     end
 
     def flush(str)
@@ -84,5 +112,5 @@ module Gorilla
       $stdout.flush
     end
   end
-  
+
 end

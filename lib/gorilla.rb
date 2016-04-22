@@ -27,7 +27,7 @@ module Gorilla
       set :redis, redis_url
       set :views, File.join(File.dirname(__FILE__), '../views')
     end
-    
+
     get '/' do
       @aggregate = Gorilla::PaymentAggregate.first
       erb :'index.html'
@@ -125,14 +125,14 @@ module Gorilla
         400
       end
     end
-    
+
     get '/dynamic/assets/js/application.js' do
       content_type :js
       @scheme = ENV['RACK_ENV'] == 'production' ? 'wss://' : 'ws://'
       puts 'scheme: #{@scheme}'
       erb :'application.js'
     end
-    
+
     private
 
     def process_event(data)
