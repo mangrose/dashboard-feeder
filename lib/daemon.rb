@@ -42,7 +42,7 @@ module Gorilla
 
       payment = data[:payload][:payment]
       amount = payment[:amount]
-      aggregate.add_amount(amount)
+      aggregate.add_amount(amount, currency(data))
       aggregate.save
       update_widget('money-today', aggregate)
 
@@ -111,6 +111,13 @@ module Gorilla
       puts str
       $stdout.flush
     end
+
+    def currency(data)
+      euro_oids = %w(hameensanomat forssanlehti media marvamedia alandstidningen)
+      return '€' if euro_oids.include?(oid(data))
+      'SEK'
+    end
+
   end
 
 end
