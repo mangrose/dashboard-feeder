@@ -118,6 +118,10 @@ module Gorilla
       'SEK'
     end
 
+    def oid(data)
+      data[:payload][:account][:organisation_id]
+    end
+
   end
 
 end
