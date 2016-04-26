@@ -8,9 +8,6 @@ module Gorilla
     def initialize
       puts 'Initializing worker'
       Mongoid.load!('mongoid.yml')
-      redis_url = ENV['REDISCLOUD_URL']
-      uri = URI.parse(redis_url)
-      @redis = Redis.new(:host => uri.host, :port => uri.port, :password => uri.password)
     end
 
     def self.perform(json)
