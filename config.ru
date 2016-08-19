@@ -9,7 +9,3 @@ use Rack::Static,
 map '/' do
   run Gorilla::App
 end
-
-map '/resque' do
-  run Resque::Server
-end
